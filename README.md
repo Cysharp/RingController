@@ -1,6 +1,6 @@
 # RingController
 
-[![CI](https://github.com/Cysharp/RingController/workflows/Build-Debug/badge.svg)](https://github.com/Cysharp/RingController/actions) 
+[![CI](https://github.com/Cysharp/RingController/workflows/build/badge.svg)](https://github.com/Cysharp/RingController/actions) 
 [![Releases](https://img.shields.io/github/release/Cysharp/RingController.svg)](https://github.com/Cysharp/RingController/releases)
 
 This is a dedicated app for the ring controller on the [Leica Leitzphone powered by Xiaomi](https://www.mi.com/global/product/leica-leitzphone-powered-by-xiaomi/). It lets you customize ring behavior everywhere on the device. We believe the ring controller’s full potential is still underappreciated—the Leitzphone is one of the first phones to ship with a powerful controller integrated in a natural way. With this app you can perform actions such as volume up/down, toggling the flashlight, turning pages in the Kindle app, and much more. You can also customize behavior per app—for example, use the ring for volume in general but page turns only in Kindle.
