@@ -1,0 +1,117 @@
+# Manual publish: set version from input, build signed APK, GitHub Release (title v*.*.*), asset without "-Signed" in filename, then create git tag.
+# Requires the same signing secrets as build.yml (ANDROID_KEYSTORE_BASE64, etc.).
+
+name: publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "tag: git tag you want create. (sample 1.0.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Parse version and tag
+        id: ver
+        shell: pwsh
+        run: |
+          $raw = "${{ inputs.tag }}".Trim()
+          if ([string]::IsNullOrWhiteSpace($raw)) { throw "tag is required" }
+          if ($raw -match '^v\d') {
+            $tagV = $raw
+            $num = $raw.Substring(1)
+          } else {
+            $num = $raw
+            $tagV = "v$raw"
+          }
+          if ($num -notmatch '^\d+\.\d+\.\d+$') {
+            throw "Version must be semver MAJOR.MINOR.PATCH (e.g. 1.0.0 or v1.0.0)"
+          }
+          $parts = $num.Split('.')
+          $maj = [int]$parts[0]; $min = [int]$parts[1]; $pat = [int]$parts[2]
+          $code = $maj * 1000000 + $min * 1000 + $pat
+          "tag_v=$tagV" >> $env:GITHUB_OUTPUT
+          "semver=$num" >> $env:GITHUB_OUTPUT
+          "app_version=$code" >> $env:GITHUB_OUTPUT
+          Write-Host "Release tag: $tagV  |  Version: $num  |  ApplicationVersion (code): $code"
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: microsoft
+          java-version: 17
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install Android workload
+        run: dotnet workload install android
+
+      - name: Publish (Release, versioned, signed)
+        shell: pwsh
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_SIGNING_STORE_PASS: ${{ secrets.ANDROID_SIGNING_STORE_PASS }}
+          ANDROID_SIGNING_KEY_PASS: ${{ secrets.ANDROID_SIGNING_KEY_PASS }}
+          ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
+        run: |
+          if (-not $env:ANDROID_KEYSTORE_BASE64) {
+            throw "ANDROID_KEYSTORE_BASE64 secret is required for publish workflow"
+          }
+          $proj = "src/RingController/RingController.csproj"
+          $semver = "${{ steps.ver.outputs.semver }}"
+          $appVer = "${{ steps.ver.outputs.app_version }}"
+          $ksPath = Join-Path $env:GITHUB_WORKSPACE "src/RingController/release.keystore"
+          $bytes = [Convert]::FromBase64String($env:ANDROID_KEYSTORE_BASE64)
+          [IO.File]::WriteAllBytes($ksPath, $bytes)
+          $alias = $env:ANDROID_SIGNING_KEY_ALIAS
+          if ([string]::IsNullOrWhiteSpace($alias)) { $alias = "ringcontroller" }
+          dotnet publish $proj `
+            -c Release -f net10.0-android -r android-arm64 `
+            "-p:Version=$semver" `
+            "-p:ApplicationDisplayVersion=$semver" `
+            "-p:ApplicationVersion=$appVer" `
+            -p:AndroidKeyStore=true `
+            "-p:AndroidSigningKeyStore=$ksPath" `
+            -p:AndroidSigningStorePass=env:ANDROID_SIGNING_STORE_PASS `
+            -p:AndroidSigningKeyPass=env:ANDROID_SIGNING_KEY_PASS `
+            "-p:AndroidSigningKeyAlias=$alias"
+
+      - name: Resolve APK and copy without -Signed
+        id: apk
+        shell: pwsh
+        run: |
+          $base = "src/RingController/bin/Release/net10.0-android"
+          $found = @(Get-ChildItem -Path $base -Recurse -Filter "com.cysharp.RingController-Signed.apk" -File -ErrorAction SilentlyContinue)
+          if ($found.Count -eq 0) { throw "Signed APK not found under $base" }
+          $pick = $found | Where-Object { $_.FullName -match '[\\/]publish[\\/]' } | Select-Object -First 1
+          if (-not $pick) { $pick = $found[0] }
+          $out = Join-Path $env:GITHUB_WORKSPACE "com.cysharp.RingController.apk"
+          Copy-Item -LiteralPath $pick.FullName -Destination $out -Force
+          Write-Host "Release asset: $out (from $($pick.FullName))"
+          "release_apk=$out" >> $env:GITHUB_OUTPUT
+
+      - name: Create GitHub Release and git tag
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $tag = "${{ steps.ver.outputs.tag_v }}"
+          $apk = "${{ steps.apk.outputs.release_apk }}"
+          gh release create $tag $apk --title $tag --generate-notes
