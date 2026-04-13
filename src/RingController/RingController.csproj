@@ -9,23 +9,17 @@
 		<ApplicationVersion>1</ApplicationVersion>
 		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
 
-		<!-- Debug: CoreCLR without trimming (fast iteration). Release uses Native AOT below (trimming required). -->
 		<UseMonoRuntime>false</UseMonoRuntime>
+		<!-- Same trim policy for Debug and Release (Release also uses Native AOT; trimming required for AOT). -->
+		<PublishTrimmed>true</PublishTrimmed>
+		<TrimMode>partial</TrimMode>
 	</PropertyGroup>
-	<PropertyGroup Condition="'$(Configuration)' == 'Debug'">
-		<TrimMode>none</TrimMode>
-		<PublishTrimmed>false</PublishTrimmed>
-	</PropertyGroup>
-	<!-- Release: Native AOT (PublishTrimmed is implied; do not set PublishTrimmed=false). Experimental: XA1040. -->
+	<!-- Release: Native AOT. Experimental: XA1040. -->
 	<PropertyGroup Condition="'$(Configuration)' == 'Release'">
 		<DebugType>none</DebugType>
 		<RuntimeIdentifiers>android-arm64</RuntimeIdentifiers>
 		<PublishAot>true</PublishAot>
 	</PropertyGroup>
-	<!-- Linker root for non-AOT builds; ILC rejects this descriptor format with IL1013 when PublishAot=true. -->
-	<ItemGroup Condition="'$(PublishAot)' != 'true'">
-		<TrimmerRootDescriptor Include="ILLink.Descriptors.xml" />
-	</ItemGroup>
 	<ItemGroup>
 		<AndroidJavaSource Include="Java\RingAppPickerAdapter.java" />
 	</ItemGroup>

@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace RingController;
 
+[JsonConverter(typeof(JsonStringEnumConverter<RingDirection>))]
 public enum RingDirection
 {
     Left,
@@ -60,6 +61,7 @@ public enum RingActionKind
     SwipeDownFromCenter = 69,
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter<RingExecutionMode>))]
 public enum RingExecutionMode
 {
     // Fire on every sensor event using current delta_x.
@@ -83,7 +85,7 @@ public sealed class RingActionConfig
     // For LaunchApp
     public string? LaunchPackageName { get; set; }
 
-    /// <summary> For <see cref="BroadcastIntentAction"/>: broadcast action string (e.g. <c>ring.receive</c>). </summary>
+    /// <summary> For <see cref="RingActionKind.BroadcastIntentAction"/>: broadcast action string (e.g. <c>ring.receive</c>). </summary>
     public string? IntentAction { get; set; }
 
     // For OpenUrl

@@ -1,5 +1,4 @@
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace RingController;
 
@@ -28,7 +27,7 @@ public static class RingConfigStore
             if (cached == null || writeUtc != lastWriteUtc)
             {
                 var json = File.ReadAllText(filePath);
-                cached = Deserialize(json);
+                cached = DeserializeConfig(json);
                 lastWriteUtc = writeUtc;
             }
 
@@ -50,8 +49,8 @@ public static class RingConfigStore
     /// <summary> Deep copy via JSON (same options as file persistence). </summary>
     public static RingConfig Clone(RingConfig config)
     {
-        var json = Serialize(config);
-        return Deserialize(json) ?? RingConfig.CreateDefault();
+        var json = SerializeConfig(config);
+        return DeserializeConfig(json) ?? RingConfig.CreateDefault();
     }
 
     /// <summary> Clone and clear nested per-app maps so stored overrides do not recurse. </summary>
@@ -65,7 +64,7 @@ public static class RingConfigStore
     public static string LoadConfigJson(Android.Content.Context context)
     {
         var cfg = LoadOrCreate(context);
-        return Serialize(cfg);
+        return SerializeConfig(cfg);
     }
 
     /// <summary> Replace stored config with deserialized JSON (e.g. after user picks a file). </summary>
@@ -74,7 +73,7 @@ public static class RingConfigStore
         errorMessage = null;
         try
         {
-            var cfg = Deserialize(json);
+            var cfg = DeserializeConfig(json);
             Save(context, cfg);
             return true;
         }
@@ -96,14 +95,13 @@ public static class RingConfigStore
 
     static void SaveInternal(Android.Content.Context context, string filePath, RingConfig config)
     {
-        var json = Serialize(config);
+        var json = SerializeConfig(config);
         File.WriteAllText(filePath, json);
     }
 
-    static RingConfig Deserialize(string json)
+    static RingConfig DeserializeConfig(string json)
     {
-        var options = CreateJsonOptions();
-        var config = JsonSerializer.Deserialize<RingConfig>(json, options) ?? RingConfig.CreateDefault();
+        var config = JsonSerializer.Deserialize(json, RingConfigJsonContext.Default.RingConfig) ?? RingConfig.CreateDefault();
         try
         {
             using var doc = JsonDocument.Parse(json);
@@ -114,7 +112,7 @@ public static class RingConfigStore
                 RingContextConfig? normal = null;
                 if (root.TryGetProperty("normal", out var normalEl))
                 {
-                    normal = JsonSerializer.Deserialize<RingContextConfig>(normalEl.GetRawText(), options)
+                    normal = JsonSerializer.Deserialize(normalEl.GetRawText(), RingConfigJsonContext.Default.RingContextConfig)
                         ?? new RingContextConfig();
                 }
 
@@ -156,12 +154,13 @@ public static class RingConfigStore
                     Normal = normal ?? RingModeProfile.CreateDefault().Normal,
                 };
                 config.EachMode = migrated;
-                config.ThresholdMode = JsonSerializer.Deserialize<RingModeProfile>(
-                    JsonSerializer.Serialize(migrated, options), options) ?? RingModeProfile.CreateDefault();
-                config.AccumulateMode = JsonSerializer.Deserialize<RingModeProfile>(
-                    JsonSerializer.Serialize(migrated, options), options) ?? RingModeProfile.CreateDefault();
-                config.GestureMode = JsonSerializer.Deserialize<RingModeProfile>(
-                    JsonSerializer.Serialize(migrated, options), options) ?? RingModeProfile.CreateDefault();
+                var migratedJson = JsonSerializer.Serialize(migrated, RingConfigJsonContext.Default.RingModeProfile);
+                config.ThresholdMode = JsonSerializer.Deserialize(migratedJson, RingConfigJsonContext.Default.RingModeProfile)
+                    ?? RingModeProfile.CreateDefault();
+                config.AccumulateMode = JsonSerializer.Deserialize(migratedJson, RingConfigJsonContext.Default.RingModeProfile)
+                    ?? RingModeProfile.CreateDefault();
+                config.GestureMode = JsonSerializer.Deserialize(migratedJson, RingConfigJsonContext.Default.RingModeProfile)
+                    ?? RingModeProfile.CreateDefault();
             }
         }
         catch
@@ -169,7 +168,7 @@ public static class RingConfigStore
             // ignore migration parse errors; keep deserialized config
         }
 
-        EnsureGestureMode(config, options);
+        EnsureGestureMode(config);
         NormalizeGestureSequenceTimeouts(config);
         config.PerAppOverrides ??= new Dictionary<string, RingConfig>();
 
@@ -197,7 +196,7 @@ public static class RingConfigStore
             profile.GestureSequenceTimeoutMs = 1000;
     }
 
-    static void EnsureGestureMode(RingConfig config, JsonSerializerOptions options)
+    static void EnsureGestureMode(RingConfig config)
     {
         config.GestureMode ??= RingConfig.CreateDefaultGestureMode();
         if (config.GestureMode.Normal.Sequences.Count > 0) return;
@@ -211,24 +210,12 @@ public static class RingConfigStore
             config.GestureMode.Normal.Sequences = [RingConfig.CreateDefaultGestureSequenceRule()];
             return;
         }
-        config.GestureMode.Normal.Sequences = JsonSerializer.Deserialize<List<RingSequenceRuleConfig>>(
-            JsonSerializer.Serialize(pick, options), options) ?? [];
+        var pickJson = JsonSerializer.Serialize(pick, RingConfigJsonContext.Default.ListRingSequenceRuleConfig);
+        config.GestureMode.Normal.Sequences = JsonSerializer.Deserialize(pickJson, RingConfigJsonContext.Default.ListRingSequenceRuleConfig)
+            ?? [];
     }
 
-    static string Serialize(RingConfig config)
-    {
-        var options = CreateJsonOptions();
-        return JsonSerializer.Serialize(config, options);
-    }
-
-    static JsonSerializerOptions CreateJsonOptions()
-    {
-        return new JsonSerializerOptions
-        {
-            WriteIndented = true,
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            Converters = { new JsonStringEnumConverter() }
-        };
-    }
+    static string SerializeConfig(RingConfig config) =>
+        JsonSerializer.Serialize(config, RingConfigJsonContext.Default.RingConfig);
 }
 
