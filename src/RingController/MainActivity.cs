@@ -1,3 +1,4 @@
+using System.Reflection;
 using Android;
 using Android.App;
 using Android.Content;
@@ -132,7 +133,11 @@ public class MainActivity : Activity, ISensorEventListener
         statusStrip.AddView(brightnessPermRow, permLp);
         UpdateBrightnessPermissionRowVisibility();
 
-        ringPanelHost = new RingSettingsPanelHost(this, cfg => RingConfigStore.Save(this, cfg));
+        ringPanelHost = new RingSettingsPanelHost(this, cfg =>
+        {
+            RingConfigStore.Save(this, cfg);
+            UpdateBrightnessPermissionRowVisibility();
+        });
         ringPanelHost.BuildInto(container, config);
 
         SetContentView(outer);
@@ -193,9 +198,10 @@ public class MainActivity : Activity, ISensorEventListener
     void UpdateBrightnessPermissionRowVisibility()
     {
         if (brightnessPermRow == null) return;
-        brightnessPermRow.Visibility = Android.Provider.Settings.System.CanWrite(this)
-            ? ViewStates.Gone
-            : ViewStates.Visible;
+        var cfg = RingConfigStore.LoadOrCreate(this);
+        var wantBrightness = RingConfig.ConfigUsesBrightnessControl(cfg);
+        var needGrant = wantBrightness && !Android.Provider.Settings.System.CanWrite(this);
+        brightnessPermRow.Visibility = needGrant ? ViewStates.Visible : ViewStates.Gone;
     }
 
     protected override void OnResume()
@@ -224,6 +230,22 @@ public class MainActivity : Activity, ISensorEventListener
 
     public void OnAccuracyChanged(Sensor? sensor, [GeneratedEnum] SensorStatus accuracy) { }
 
+    /// <summary>
+    /// Version string from embedded assembly metadata (SDK sets from &lt;Version&gt; / InformationalVersion; CI can override).
+    /// </summary>
+    static string GetDisplayVersionFromAssembly()
+    {
+        var asm = Assembly.GetExecutingAssembly();
+        var info = asm.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
+        if (info?.InformationalVersion is { Length: > 0 } iv)
+        {
+            var plus = iv.IndexOf('+');
+            return plus >= 0 ? iv[..plus] : iv;
+        }
+
+        return asm.GetName().Version?.ToString() ?? "?";
+    }
+
     void ShowVersionDialog()
     {
         var pm = PackageManager;
@@ -240,20 +262,43 @@ public class MainActivity : Activity, ISensorEventListener
             return;
         }
         var label = ApplicationInfo?.LoadLabel(pm)?.ToString() ?? GetString(Resource.String.app_name);
-        var verName = info.VersionName ?? "";
+        // Display version: MSBuild / assembly (InformationalVersion or AssemblyVersion); matches CI -p:Version=...
+        var verDisplay = GetDisplayVersionFromAssembly();
         var verCode = Build.VERSION.SdkInt >= BuildVersionCodes.P
             ? (long)info.LongVersionCode
             : info.VersionCode;
         var url = GetString(Resource.String.app_info_url);
-        var msg = $"{label}\n\n{GetString(Resource.String.version_label)} {verName} ({verCode})\n\n{url}";
 
         var root = new LinearLayout(this) { Orientation = Orientation.Vertical };
         var dlgPad = (int)(22 * dp);
         root.SetPadding(dlgPad, dlgPad, dlgPad, dlgPad);
 
-        var msgTv = new TextView(this) { Text = msg, TextSize = 15f };
+        var titleBlock = $"{label}\n\n{GetString(Resource.String.version_label)} {verDisplay} ({verCode})";
+        var msgTv = new TextView(this) { Text = titleBlock, TextSize = 15f };
         msgTv.SetTextColor(Clr(Resource.Color.md_theme_onSurface));
         root.AddView(msgTv);
+
+        var urlTv = new TextView(this) { Text = url, TextSize = 15f };
+        urlTv.SetTextColor(Clr(Resource.Color.md_theme_primary));
+        urlTv.SetPadding(0, (int)(12 * dp), 0, 0);
+        urlTv.PaintFlags |= Android.Graphics.PaintFlags.UnderlineText;
+        urlTv.Clickable = true;
+        urlTv.Focusable = true;
+        var urlTa = ObtainStyledAttributes(new[] { Android.Resource.Attribute.SelectableItemBackgroundBorderless });
+        urlTv.Background = urlTa.GetDrawable(0);
+        urlTa.Recycle();
+        urlTv.Click += (_, _) =>
+        {
+            try
+            {
+                StartActivity(new Intent(Intent.ActionView, Android.Net.Uri.Parse(url!)));
+            }
+            catch
+            {
+                // ignore
+            }
+        };
+        root.AddView(urlTv);
 
         var btnRow = new LinearLayout(this) { Orientation = Orientation.Horizontal };
         btnRow.SetGravity(GravityFlags.CenterHorizontal);

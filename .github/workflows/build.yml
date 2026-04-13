@@ -1,3 +1,9 @@
+# Release signing (optional): set repository secrets below. If ANDROID_KEYSTORE_BASE64 is unset, publish uses the debug keystore (e.g. PRs from forks).
+#   ANDROID_KEYSTORE_BASE64 — Base64 of release.keystore (PowerShell: [Convert]::ToBase64String([IO.File]::ReadAllBytes("release.keystore")))
+#   ANDROID_SIGNING_STORE_PASS — keystore password
+#   ANDROID_SIGNING_KEY_PASS — key password (often same as store)
+#   ANDROID_SIGNING_KEY_ALIAS — optional; defaults to ringcontroller if empty
+
 name: build
 
 on:
@@ -30,10 +36,39 @@ jobs:
 
       # Native AOT Release: publish with RID (plain publish without -r can fail MSB3030 on RingController.so).
       - name: Publish (Release, android-arm64)
-        run: dotnet publish src/RingController/RingController.csproj -c Release -f net10.0-android -r android-arm64
+        shell: pwsh
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_SIGNING_STORE_PASS: ${{ secrets.ANDROID_SIGNING_STORE_PASS }}
+          ANDROID_SIGNING_KEY_PASS: ${{ secrets.ANDROID_SIGNING_KEY_PASS }}
+          ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
+        run: |
+          $proj = "src/RingController/RingController.csproj"
+          $args = @(
+            "publish", $proj,
+            "-c", "Release",
+            "-f", "net10.0-android",
+            "-r", "android-arm64"
+          )
+          if ($env:ANDROID_KEYSTORE_BASE64) {
+            $ksPath = Join-Path $env:GITHUB_WORKSPACE "src/RingController/release.keystore"
+            $bytes = [Convert]::FromBase64String($env:ANDROID_KEYSTORE_BASE64)
+            [IO.File]::WriteAllBytes($ksPath, $bytes)
+            $alias = $env:ANDROID_SIGNING_KEY_ALIAS
+            if ([string]::IsNullOrWhiteSpace($alias)) { $alias = "ringcontroller" }
+            $args += @(
+              "-p:AndroidKeyStore=true",
+              "-p:AndroidSigningKeyStore=$ksPath",
+              "-p:AndroidSigningStorePass=env:ANDROID_SIGNING_STORE_PASS",
+              "-p:AndroidSigningKeyPass=env:ANDROID_SIGNING_KEY_PASS",
+              "-p:AndroidSigningKeyAlias=$alias"
+            )
+            Write-Host "Publishing with release keystore (alias: $alias)"
+          } else {
+            Write-Warning "ANDROID_KEYSTORE_BASE64 not set — publishing with default debug keystore"
+          }
+          dotnet @args
 
-      # RID 付き publish では APK は net10.0-android 直下ではなく android-arm64/ や publish/ に出ることがある
-      # upload-artifact v7 の archive:false は単一ファイルのみ → 先に 1 パスに確定する
       - name: Resolve signed APK path
         id: signed_apk
         shell: pwsh
@@ -46,7 +81,6 @@ jobs:
           if ($found.Count -gt 1) { Write-Warning "Multiple APKs ($($found.Count)); uploading: $($pick.FullName)" }
           "apk_path=$($pick.FullName)" >> $env:GITHUB_OUTPUT
 
-      # archive:false で ZIP せず APK をそのままアップロード（ブラウザでそのまま取得可）。artifact 名はファイル名になる
       - name: Upload signed APK
         uses: actions/upload-artifact@v7
         with:

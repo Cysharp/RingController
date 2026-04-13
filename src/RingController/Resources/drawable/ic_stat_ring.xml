@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Simple monochrome icon for notifications (adaptive mipmap is not valid for SetSmallIcon). -->
+<!-- Notification / status: same ring motif as launcher (12 ticks for legibility at 24dp). -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
     <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10 10,-4.48 10,-10S17.52,2 12,2zM12,20c-4.42,0 -8,-3.58 -8,-8s3.58,-8 8,-8 8,3.58 8,8 -3.58,8 -8,8z" />
+        android:fillColor="#00000000"
+        android:pathData="M 12,4.5 L 12,7 M 15.75,5.5 L 14.5,7.67 M 18.5,8.25 L 16.33,9.5 M 19.5,12 L 17,12 M 18.5,15.75 L 16.33,14.5 M 15.75,18.5 L 14.5,16.33 M 12,19.5 L 12,17 M 8.25,18.5 L 9.5,16.33 M 5.5,15.75 L 7.67,14.5 M 4.5,12 L 7,12 M 5.5,8.25 L 7.67,9.5 M 8.25,5.5 L 9.5,7.67"
+        android:strokeWidth="1.35"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeLineCap="round" />
 </vector>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 12 radial ticks (outer r=31, inner r=25 — shorter spokes, larger center void). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M 54,23 L 54,29 M 69.5,27.15 L 66.5,32.35 M 80.85,38.5 L 75.65,41.5 M 85,54 L 79,54 M 80.85,69.5 L 75.65,66.5 M 69.5,80.85 L 66.5,75.65 M 54,85 L 54,79 M 38.5,80.85 L 41.5,75.65 M 27.15,69.5 L 32.35,66.5 M 23,54 L 29,54 M 27.15,38.5 L 32.35,41.5 M 38.5,27.15 L 41.5,32.35"
+        android:strokeWidth="3.5"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeLineCap="round" />
+</vector>

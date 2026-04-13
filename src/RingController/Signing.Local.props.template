@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <!--
+    Local: copy → Signing.Local.props; dotnet publish -c Release -f net10.0-android -r android-arm64
+    GitHub Actions: set repo secrets (see .github/workflows/build.yml); no Signing.Local.props on the runner.
+  -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <AndroidKeyStore>true</AndroidKeyStore>
+    <AndroidSigningKeyStore>$(MSBuildThisFileDirectory)release.keystore</AndroidSigningKeyStore>
+    <AndroidSigningStorePass>env:ANDROID_SIGNING_STORE_PASS</AndroidSigningStorePass>
+    <AndroidSigningKeyAlias>ringcontroller</AndroidSigningKeyAlias>
+    <AndroidSigningKeyPass>env:ANDROID_SIGNING_KEY_PASS</AndroidSigningKeyPass>
+  </PropertyGroup>
+</Project>

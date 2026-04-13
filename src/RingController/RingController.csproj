@@ -6,8 +6,12 @@
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<ApplicationId>com.cysharp.RingController</ApplicationId>
+		<!-- User-facing / assembly version (override in CI: -p:Version=x.y.z). Android versionName follows this. -->
+		<Version>1.0.0</Version>
+		<ApplicationDisplayVersion>$(Version)</ApplicationDisplayVersion>
+		<!-- Integer versionCode for Play / side-by-side installs; bump in CI releases if needed. -->
 		<ApplicationVersion>1</ApplicationVersion>
-		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+		<!-- Signing: *-Signed.apk = signed package. Default is the debug keystore. For release, set AndroidKeyStore=true and AndroidSigning* (see https://learn.microsoft.com/dotnet/android/building-apps/build-properties ). -->
 
 		<UseMonoRuntime>false</UseMonoRuntime>
 		<!-- Same trim policy for Debug and Release (Release also uses Native AOT; trimming required for AOT). -->

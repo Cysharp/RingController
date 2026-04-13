@@ -17,3 +17,8 @@ MultiTimer/build.log
 
 # Local logs
 LeitzphoneRingController/logs/
+
+# Android release signing (never commit keystores or local props)
+*.jks
+*.keystore
+src/RingController/Signing.Local.props

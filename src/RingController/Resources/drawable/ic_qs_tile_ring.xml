@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- QS tile: 10 filled ticks (36° spacing) for ring readout. Outer r=9.65 (~2.35dp inset) to avoid circular-tile clipping; was 10.4 and looked “eaten” at edge. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M 11.092,2.393 L 12.908,2.393 L 12.616,5.479 L 11.384,5.479 Z M 16.912,3.694 L 18.382,4.761 L 16.332,7.087 L 15.334,6.362 Z M 20.856,8.168 L 21.418,9.895 L 18.392,10.571 L 18.011,9.399 Z M 21.418,14.105 L 20.856,15.832 L 18.011,14.601 L 18.392,13.429 Z M 18.382,19.239 L 16.912,20.306 L 15.334,17.638 L 16.332,16.913 Z M 12.908,21.607 L 11.092,21.607 L 11.384,18.521 L 12.616,18.521 Z M 7.088,20.306 L 5.618,19.239 L 7.668,16.913 L 8.666,17.638 Z M 3.144,15.832 L 2.582,14.105 L 5.608,13.429 L 5.989,14.601 Z M 2.582,9.895 L 3.144,8.168 L 5.989,9.399 L 5.608,10.571 Z M 5.618,4.761 L 7.088,3.694 L 8.666,6.362 L 7.668,7.087 Z" />
+</vector>

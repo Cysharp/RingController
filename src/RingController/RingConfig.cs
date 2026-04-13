@@ -301,4 +301,44 @@ public sealed class RingConfig
             GestureMode = CreateDefaultGestureMode()
         };
     }
+
+    /// <summary>
+    /// True if any profile (each/threshold/accumulate/gesture) or per-app override assigns Brightness Up/Down.
+    /// </summary>
+    public static bool ConfigUsesBrightnessControl(RingConfig cfg)
+    {
+        if (ProfileUsesBrightness(cfg.EachMode)) return true;
+        if (ProfileUsesBrightness(cfg.ThresholdMode)) return true;
+        if (ProfileUsesBrightness(cfg.AccumulateMode)) return true;
+        if (ProfileUsesBrightness(cfg.GestureMode)) return true;
+        foreach (var kv in cfg.PerAppOverrides)
+        {
+            if (ConfigUsesBrightnessControl(kv.Value)) return true;
+        }
+        return false;
+    }
+
+    static bool ProfileUsesBrightness(RingModeProfile profile)
+    {
+        var n = profile.Normal;
+        if (DirectionUsesBrightness(n.Left) || DirectionUsesBrightness(n.Right)) return true;
+        foreach (var seq in n.Sequences)
+        {
+            if (ActionUsesBrightness(seq.Action)) return true;
+        }
+        return false;
+    }
+
+    static bool DirectionUsesBrightness(RingDirectionMappingConfig map)
+    {
+        if (ActionUsesBrightness(map.DefaultAction)) return true;
+        foreach (var r in map.MagnitudeRules)
+        {
+            if (ActionUsesBrightness(r.Action)) return true;
+        }
+        return false;
+    }
+
+    static bool ActionUsesBrightness(RingActionConfig a) =>
+        a.Kind is RingActionKind.BrightnessUp or RingActionKind.BrightnessDown;
 }

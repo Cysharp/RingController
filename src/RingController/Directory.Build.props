@@ -1,0 +1,4 @@
+<Project>
+  <!-- Local release signing: copy Signing.Local.props.template → Signing.Local.props (gitignored). -->
+  <Import Project="$(MSBuildThisFileDirectory)Signing.Local.props" Condition="Exists('$(MSBuildThisFileDirectory)Signing.Local.props')" />
+</Project>
