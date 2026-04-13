@@ -22,6 +22,11 @@
 		<!--<RuntimeIdentifiers>android-arm64</RuntimeIdentifiers>
 		<PublishAot>true</PublishAot>-->
 	</PropertyGroup>
+	<!-- Release: omit separate PDB so ResolvedSymbols does not hit MSB4096 in Microsoft.Android.Sdk.AssemblyResolution.targets
+	     (_PrepareAssemblies batches on %(DestinationSubPath) when PublishTrimmed is false; CoreCLR + net*-android). -->
+	<PropertyGroup Condition="'$(Configuration)' == 'Release'">
+		<DebugType>none</DebugType>
+	</PropertyGroup>
 	<ItemGroup>
 		<TrimmerRootDescriptor Include="ILLink.Descriptors.xml" />
 	</ItemGroup>
