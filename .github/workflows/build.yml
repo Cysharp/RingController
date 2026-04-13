@@ -33,9 +33,23 @@ jobs:
         run: dotnet publish src/RingController/RingController.csproj -c Release -f net10.0-android -r android-arm64
 
       # RID 付き publish では APK は net10.0-android 直下ではなく android-arm64/ や publish/ に出ることがある
+      # upload-artifact v7 の archive:false は単一ファイルのみ → 先に 1 パスに確定する
+      - name: Resolve signed APK path
+        id: signed_apk
+        shell: pwsh
+        run: |
+          $base = "src/RingController/bin/Release/net10.0-android"
+          $found = @(Get-ChildItem -Path $base -Recurse -Filter "com.cysharp.RingController-Signed.apk" -File -ErrorAction SilentlyContinue)
+          if ($found.Count -eq 0) { throw "Signed APK not found under $base" }
+          $pick = $found | Where-Object { $_.FullName -match '[\\/]publish[\\/]' } | Select-Object -First 1
+          if (-not $pick) { $pick = $found[0] }
+          if ($found.Count -gt 1) { Write-Warning "Multiple APKs ($($found.Count)); uploading: $($pick.FullName)" }
+          "apk_path=$($pick.FullName)" >> $env:GITHUB_OUTPUT
+
+      # archive:false で ZIP せず APK をそのままアップロード（ブラウザでそのまま取得可）。artifact 名はファイル名になる
       - name: Upload signed APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
-          name: com.cysharp.RingController-Signed
-          path: src/RingController/bin/Release/net10.0-android/**/com.cysharp.RingController-Signed.apk
+          path: ${{ steps.signed_apk.outputs.apk_path }}
+          archive: false
           if-no-files-found: error
