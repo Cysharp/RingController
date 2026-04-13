@@ -28,5 +28,7 @@ jobs:
       - name: Install Android workload
         run: dotnet workload install android
 
+      # DebugType=none: avoids MSB4096 in Microsoft.Android.Sdk.AssemblyResolution.targets (_PrepareAssemblies)
+      # when ResolvedSymbols items lack DestinationSubPath (CoreCLR / non-trimmed Release builds); CI only needs compile verification.
       - name: Build
-        run: dotnet build src/RingController/RingController.csproj -c Release
+        run: dotnet build src/RingController/RingController.csproj -c Release -p:DebugType=none
