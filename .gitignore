@@ -1,0 +1,19 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# Build outputs
+bin/
+obj/
+
+# NuGet
+packages/
+
+# OS
+Thumbs.db
+.DS_Store
+MultiTimer/build.log
+
+# Local logs
+LeitzphoneRingController/logs/

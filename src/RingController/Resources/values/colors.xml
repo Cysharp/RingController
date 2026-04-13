@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- M3 Dark Monochrome — Leica Monochrom aesthetic -->
+
+    <color name="md_theme_primary">#D0D0D0</color>
+    <color name="md_theme_onPrimary">#1A1A1A</color>
+    <color name="md_theme_primaryContainer">#2A2A2A</color>
+    <color name="md_theme_onPrimaryContainer">#E0E0E0</color>
+
+    <color name="md_theme_secondary">#B0B0B0</color>
+    <color name="md_theme_onSecondary">#1A1A1A</color>
+    <color name="md_theme_secondaryContainer">#333333</color>
+    <color name="md_theme_onSecondaryContainer">#D0D0D0</color>
+
+    <color name="md_theme_tertiary">#B0B0B0</color>
+    <color name="md_theme_onTertiary">#1A1A1A</color>
+    <color name="md_theme_tertiaryContainer">#333333</color>
+    <color name="md_theme_onTertiaryContainer">#D0D0D0</color>
+
+    <color name="md_theme_error">#CF6679</color>
+    <color name="md_theme_onError">#1A1A1A</color>
+    <color name="md_theme_errorContainer">#4D2630</color>
+    <color name="md_theme_onErrorContainer">#F2B8C4</color>
+
+    <color name="md_theme_surface">#111111</color>
+    <color name="md_theme_onSurface">#E4E4E4</color>
+    <color name="md_theme_onSurfaceVariant">#9E9E9E</color>
+
+    <color name="md_theme_surfaceContainerLowest">#0A0A0A</color>
+    <color name="md_theme_surfaceContainerLow">#1A1A1A</color>
+    <color name="md_theme_surfaceContainer">#1F1F1F</color>
+    <color name="md_theme_surfaceContainerHigh">#292929</color>
+    <color name="md_theme_surfaceContainerHighest">#333333</color>
+
+    <color name="md_theme_outline">#757575</color>
+    <color name="md_theme_outlineVariant">#3D3D3D</color>
+
+    <color name="md_theme_inverseSurface">#E4E4E4</color>
+    <color name="md_theme_inverseOnSurface">#1A1A1A</color>
+    <color name="md_theme_inversePrimary">#4A4A4A</color>
+
+    <color name="md_theme_successGreen">#66BB6A</color>
+    <!-- Leica-style rangefinder / red-dot accent (vivid, not PMS-matched) -->
+    <color name="md_theme_leicaRed">#E30613</color>
+</resources>

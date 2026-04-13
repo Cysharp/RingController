@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/RingController/RingController.csproj">
+      <Deploy />
+    </Project>
+  </Folder>
+</Solution>
