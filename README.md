@@ -1,4 +1,4 @@
-# RingController
+# RingController for Leica Leitzphone
 
 [![CI](https://github.com/Cysharp/RingController/workflows/build/badge.svg)](https://github.com/Cysharp/RingController/actions) 
 [![Releases](https://img.shields.io/github/release/Cysharp/RingController.svg)](https://github.com/Cysharp/RingController/releases)
