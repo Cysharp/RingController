@@ -28,8 +28,9 @@ jobs:
       - name: Install Android workload
         run: dotnet workload install android
 
-      - name: Build
-        run: dotnet build src/RingController/RingController.csproj -c Release
+      # Native AOT Release: publish with RID (plain publish without -r can fail MSB3030 on RingController.so).
+      - name: Publish (Release, android-arm64)
+        run: dotnet publish src/RingController/RingController.csproj -c Release -f net10.0-android -r android-arm64
 
       - name: Upload signed APK
         uses: actions/upload-artifact@v4
