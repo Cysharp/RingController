@@ -7,7 +7,7 @@ This is a dedicated app for the ring controller on the [Leica Leitzphone powered
 
 ![](img/ring_top.jpg)
 
-The app reads raw ring sensor data and is implemented as an Android Accessibility Service using C# + [.NET for Android](https://learn.microsoft.com/en-us/dotnet/android/) + CoreCLR/Native AOT. Because it requests elevated privileges to work system-wide, we publish the source for transparency so you can verify it does nothing malicious.
+The app reads raw ring sensor data and is implemented as an Android Accessibility Service using **C#** + [.NET for Android](https://learn.microsoft.com/en-us/dotnet/android/) + CoreCLR/Native AOT. Because it requests elevated privileges to work system-wide, we publish the source for transparency so you can verify it does nothing malicious.
 
 ## Getting Started
 
