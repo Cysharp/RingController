@@ -30,3 +30,10 @@ jobs:
 
       - name: Build
         run: dotnet build src/RingController/RingController.csproj -c Release
+
+      - name: Upload signed APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: com.cysharp.RingController-Signed
+          path: src/RingController/bin/Release/net10.0-android/com.cysharp.RingController-Signed.apk
+          if-no-files-found: error
