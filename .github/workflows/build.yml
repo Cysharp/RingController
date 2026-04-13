@@ -32,9 +32,10 @@ jobs:
       - name: Publish (Release, android-arm64)
         run: dotnet publish src/RingController/RingController.csproj -c Release -f net10.0-android -r android-arm64
 
+      # RID 付き publish では APK は net10.0-android 直下ではなく android-arm64/ や publish/ に出ることがある
       - name: Upload signed APK
         uses: actions/upload-artifact@v4
         with:
           name: com.cysharp.RingController-Signed
-          path: src/RingController/bin/Release/net10.0-android/com.cysharp.RingController-Signed.apk
+          path: src/RingController/bin/Release/net10.0-android/**/com.cysharp.RingController-Signed.apk
           if-no-files-found: error
