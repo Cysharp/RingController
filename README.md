@@ -11,7 +11,9 @@ The app reads raw ring sensor data and is implemented as an Android Accessibilit
 
 ## Getting Started
 
-[![](img/get-it-on-github.png)](https://github.com/Cysharp/RingController/releases/latest)
+[<img src="img/get-it-on-github.png"
+    alt="Get it on GitHub"
+    height="80">](https://github.com/Cysharp/RingController/releases/latest)
 
 Install `com.cysharp.RingController.apk` from the Assets section on the [Releases](https://github.com/Cysharp/RingController/releases/latest) page. If you want to manage versions, you can use [Obtainium](https://github.com/ImranR98/Obtainium/)
 and apply `https://github.com/Cysharp/RingController`.
