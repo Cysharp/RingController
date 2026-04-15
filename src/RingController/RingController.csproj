@@ -6,6 +6,8 @@
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<ApplicationId>com.cysharp.RingController</ApplicationId>
+		<!-- Debug: side-by-side with store/GitHub APK (different signing + package id). -->
+		<ApplicationId Condition="'$(Configuration)' == 'Debug'">$(ApplicationId).debug</ApplicationId>
 		<!-- User-facing / assembly version (override in CI: -p:Version=x.y.z). Android versionName follows this. -->
 		<Version>1.0.0</Version>
 		<ApplicationDisplayVersion>$(Version)</ApplicationDisplayVersion>
@@ -26,5 +28,10 @@
 	</PropertyGroup>
 	<ItemGroup>
 		<AndroidJavaSource Include="Java\RingAppPickerAdapter.java" />
+	</ItemGroup>
+	<!-- Launcher / QS tile label: Release uses values file; Debug swaps via Link (avoid glob picking two app_name). -->
+	<ItemGroup Condition="'$(Configuration)' == 'Debug'">
+		<AndroidResource Remove="Resources\values\strings_app_name.xml" />
+		<AndroidResource Include="Properties\AndroidDebug\strings_app_name.xml" Link="Resources\values\strings_app_name.xml" />
 	</ItemGroup>
 </Project>

@@ -1,5 +1,4 @@
 <resources>
-    <string name="app_name">RingController</string>
     <string name="ring_ui_title">Ring</string>
     <string name="ring_ui_subtitle">Customize focus ring actions</string>
     <string name="ring_status_section">Status</string>
