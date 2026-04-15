@@ -11,7 +11,10 @@ The app reads raw ring sensor data and is implemented as an Android Accessibilit
 
 ## Getting Started
 
-Install `com.cysharp.RingController.apk` from the Assets section on the [Releases](https://github.com/Cysharp/RingController/releases) page.
+[![](img/get-it-on-github.png)](https://github.com/Cysharp/RingController/releases/latest)
+
+Install `com.cysharp.RingController.apk` from the Assets section on the [Releases](https://github.com/Cysharp/RingController/releases/latest) page. If you want to manage versions, you can use [Obtainium](https://github.com/ImranR98/Obtainium/)
+and apply `https://github.com/Cysharp/RingController`.
 
 Tap the “Service Stopped” message at the top and enable the Accessibility Service in Accessibility settings. Check **Downloaded apps** → **RingController** → **Use RingController**. Once enabled, the top message changes to “Service Running” and the ring controller becomes active.
 
