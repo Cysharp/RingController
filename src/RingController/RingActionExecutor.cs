@@ -412,7 +412,7 @@ public sealed class RingActionExecutor
         var cy = h * 0.5f;
         cy = Math.Clamp(cy, h * 0.15f, h * 0.85f);
 
-        var half = Math.Min(h * 0.38f, 560f) * 0.5f;
+        var half = Math.Min(h * 0.38f, 560f) * 0.25f;
         float y1, y2;
         if (swipeUp)
         {

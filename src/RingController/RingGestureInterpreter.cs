@@ -12,19 +12,9 @@ public sealed class RingGestureInterpreter
     readonly List<GestureEvent> buffer = new();
     readonly List<GestureSequenceState> gestureSequenceStates = new();
     int? lastGestureSumForDriver;
-    /// <summary>
-    /// Time of the last sensor callback. After <see cref="ResetTimeoutClocksForSensorEvent"/> resets to 0,
-    /// updated in <see cref="InterpretGesture"/>'s <c>finally</c> (elapsed time restarts per event).
-    /// </summary>
+    /// <summary> Time of the last <see cref="InterpretGesture"/> sample; used for <c>MaxGapMs</c> between callbacks. </summary>
     long lastGestureSensorMs;
     long lastActionAtMs;
-
-    /// <summary> Resets internal timeout/cooldown clocks to 0 on each sensor event (call from the service every time). </summary>
-    internal void ResetTimeoutClocksForSensorEvent()
-    {
-        lastGestureSensorMs = 0;
-        lastActionAtMs = 0;
-    }
 
     struct GestureSequenceState
     {
@@ -58,6 +48,16 @@ public sealed class RingGestureInterpreter
 
     static int GestureRightIncrement(int deltaX, int dSum) =>
         DirectionalGestureIncrement(Math.Max(0, -deltaX), Math.Max(0, -dSum));
+
+    /// <summary> Clears driver/gesture/bookkeeping state after user idle or app switch (high-rate sensor never "gaps" in time). </summary>
+    public void ResetProcessingStateAfterIdle()
+    {
+        lastGestureSumForDriver = null;
+        lastGestureSensorMs = 0;
+        lastActionAtMs = 0;
+        buffer.Clear();
+        gestureSequenceStates.Clear();
+    }
 
     /// <summary>
     /// Gesture mode: accumulates per-frame <c>delta_x</c> and sum deltas per direction (<see cref="DirectionalGestureIncrement"/> dampens release overshoot).

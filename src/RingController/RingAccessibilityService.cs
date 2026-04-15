@@ -44,6 +44,12 @@ public class RingAccessibilityService : AccessibilityService, ISensorEventListen
     /// <summary> ThresholdCrossing: last time we executed after a successful <see cref="RingGestureInterpreter.Interpret"/> (rate limit via <see cref="RingModeProfile.AccumulationTimeoutMs"/>). </summary>
     long lastThresholdTriggerAtMs;
 
+    /// <summary> Last sample where ring reported motion or off-center integral (see <see cref="TryResetInterpreterAfterRingIdle"/>). </summary>
+    long lastMeaningfulRingActivityMs;
+
+    const long MeaningfulRingIdleResetMs = 400;
+    const int MeaningfulRingSumAbsQuiet = 24;
+
     const string SensorStringTypeOpticalTracking = "xiaomi.sensor.optical_tracking";
 
     public override void OnCreate()
@@ -102,6 +108,7 @@ public class RingAccessibilityService : AccessibilityService, ISensorEventListen
     /// <summary> Sets foreground package for per-app config and whether a camera app is on top. </summary>
     void UpdateForegroundPackage(string packageName)
     {
+        var priorResolved = foregroundResolvedPackage;
         var resolvedPackageName = packageName;
 
         // Home / system UI can be the event package while another app is actually focused — prefer root window.
@@ -137,6 +144,14 @@ public class RingAccessibilityService : AccessibilityService, ISensorEventListen
         }
 
         foregroundResolvedPackage = resolvedPackageName;
+        if (!string.IsNullOrEmpty(priorResolved) &&
+            !string.Equals(priorResolved, foregroundResolvedPackage, StringComparison.Ordinal))
+        {
+            interpreter.ResetProcessingStateAfterIdle();
+            lastSumDeltaXForAccum = null;
+            accumBaselineSum = null;
+            lastMeaningfulRingActivityMs = 0;
+        }
     }
 
     RingConfig ResolveEffectiveRingConfig(RingConfig? loadedRoot = null)
@@ -182,6 +197,28 @@ public class RingAccessibilityService : AccessibilityService, ISensorEventListen
         return Math.Max(integralAbs, ThresholdAlignedBlendedAbs(sum, delta, minAbsToTrigger));
     }
 
+    /// <summary>
+    /// Optical tracking can stream events continuously; inter-sample time never shows "idle". After quiet motion/integral,
+    /// reset interpreter + accum baselines so stale driver state cannot block triggers.
+    /// </summary>
+    void TryResetInterpreterAfterRingIdle(long nowMs, int sumDeltaX, int deltaX)
+    {
+        var meaningful = deltaX != 0 || Math.Abs(sumDeltaX) > MeaningfulRingSumAbsQuiet;
+        if (meaningful)
+        {
+            lastMeaningfulRingActivityMs = nowMs;
+            return;
+        }
+
+        if (lastMeaningfulRingActivityMs <= 0) return;
+        if (nowMs - lastMeaningfulRingActivityMs <= MeaningfulRingIdleResetMs) return;
+
+        interpreter.ResetProcessingStateAfterIdle();
+        lastSumDeltaXForAccum = null;
+        accumBaselineSum = null;
+        lastMeaningfulRingActivityMs = 0;
+    }
+
     public void OnSensorChanged(SensorEvent? e)
     {
         if (e?.Values == null || e.Values.Count < 8) return;
@@ -192,14 +229,14 @@ public class RingAccessibilityService : AccessibilityService, ISensorEventListen
         if (isCameraForeground) return;
 
         var sensorData = ringSensor.CreateRingSensorData(e);
+        var now = SystemClock.UptimeMillis();
+        TryResetInterpreterAfterRingIdle(now, sensorData.sum_delta_x, sensorData.delta_x);
+
         var config = ResolveEffectiveRingConfig(root);
         var modeProfile = config.GetProfile(config.ExecutionMode);
 
-        // Every sensor event: zero all timeout / interval bases so nothing carries over from prior samples.
-        lastThresholdTriggerAtMs = 0;
-        lastAccumExecuteAtMs = 0;
-        lastSensorEventMsForAccum = 0;
-        interpreter.ResetTimeoutClocksForSensorEvent();
+        // Timing state (threshold / accum idle / gesture gap & cooldown) must persist across sensor callbacks.
+        // Resetting clocks every sample broke MaxGapMs, idle baseline snap, and cooldowns after pauses (e.g. app scroll).
 
         if (config.ExecutionMode != RingExecutionMode.ThresholdAccumulatedRepeat)
         {
@@ -212,7 +249,6 @@ public class RingAccessibilityService : AccessibilityService, ISensorEventListen
 
         if (config.ExecutionMode == RingExecutionMode.Gesture)
         {
-            var now = SystemClock.UptimeMillis();
             var sum = sensorData.sum_delta_x;
             var gestureAction = interpreter.InterpretGesture(
                 sumDeltaX: sum,
@@ -238,7 +274,6 @@ public class RingAccessibilityService : AccessibilityService, ISensorEventListen
         }
         else if (config.ExecutionMode == RingExecutionMode.ThresholdAccumulatedRepeat)
         {
-            var now = SystemClock.UptimeMillis();
             long resetAfter = modeProfile.AccumulationTimeoutMs > 0 ? modeProfile.AccumulationTimeoutMs : 100;
             long minIntervalMs = resetAfter;
 
